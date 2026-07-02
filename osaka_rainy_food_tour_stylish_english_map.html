@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Osaka Rainy Food Tour Map</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+:root {
+  --rain:#60a5fa;
+  --navy:#0f172a;
+  --cyan:#22d3ee;
+  --purple:#a78bfa;
+  --green:#34d399;
+  --rose:#fb7185;
+  --panel:rgba(255,255,255,.94);
+  --line:rgba(255,255,255,.18);
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sans-serif;
+  color:white;
+  background:
+    radial-gradient(circle at 10% 5%,rgba(96,165,250,.28),transparent 30%),
+    radial-gradient(circle at 88% 12%,rgba(167,139,250,.26),transparent 32%),
+    radial-gradient(circle at 70% 92%,rgba(34,211,238,.17),transparent 28%),
+    linear-gradient(135deg,#07111f,#111827 48%,#0f172a);
+}
+.hero{
+  padding:24px 18px 16px;
+  border-bottom:1px solid var(--line);
+}
+.eyebrow{
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  color:rgba(255,255,255,.62);
+  font-size:11px;
+  margin-bottom:8px;
+}
+h1{
+  margin:0;
+  font-size:clamp(26px,6vw,46px);
+  line-height:1.05;
+  font-weight:880;
+}
+.lead{
+  margin:10px 0 16px;
+  max-width:840px;
+  color:rgba(255,255,255,.78);
+  line-height:1.55;
+  font-size:14px;
+}
+.toolbar{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+button{
+  border:1px solid rgba(255,255,255,.28);
+  color:white;
+  background:rgba(255,255,255,.09);
+  padding:10px 13px;
+  border-radius:999px;
+  font-weight:800;
+  font-size:13px;
+  cursor:pointer;
+  backdrop-filter:blur(12px);
+}
+button.active{
+  background:white;
+  color:#111827;
+  border-color:white;
+}
+.layout{
+  display:grid;
+  grid-template-columns:minmax(0,1.45fr) minmax(330px,.75fr);
+  gap:14px;
+  padding:14px;
+}
+#map{
+  min-height:68vh;
+  height:calc(100vh - 205px);
+  border-radius:24px;
+  overflow:hidden;
+  border:1px solid var(--line);
+  box-shadow:0 24px 70px rgba(0,0,0,.38);
+}
+.side{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  max-height:calc(100vh - 205px);
+  overflow:auto;
+  padding-right:2px;
+}
+.recommend{
+  background:linear-gradient(135deg,rgba(255,255,255,.18),rgba(255,255,255,.08));
+  border:1px solid var(--line);
+  border-radius:24px;
+  padding:16px;
+  backdrop-filter:blur(20px);
+}
+.recommend h2{
+  margin:0 0 6px;
+  font-size:17px;
+}
+.recommend .meta{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin:9px 0 10px;
+}
+.pill{
+  background:rgba(255,255,255,.12);
+  border:1px solid rgba(255,255,255,.16);
+  padding:7px 9px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:800;
+}
+.recommend p{
+  margin:0;
+  color:rgba(255,255,255,.76);
+  font-size:13px;
+  line-height:1.55;
+}
+.route{
+  margin-top:10px;
+  display:grid;
+  gap:8px;
+}
+.route div{
+  background:rgba(255,255,255,.09);
+  border:1px solid rgba(255,255,255,.13);
+  border-radius:14px;
+  padding:9px 10px;
+  font-size:13px;
+  line-height:1.45;
+}
+.cards{
+  display:grid;
+  gap:10px;
+}
+.card{
+  background:var(--panel);
+  color:#111827;
+  border-radius:20px;
+  padding:14px;
+  box-shadow:0 12px 32px rgba(0,0,0,.18);
+  border:1px solid rgba(255,255,255,.2);
+}
+.topline{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  align-items:flex-start;
+}
+.card h3{
+  margin:0;
+  font-size:16px;
+}
+.tag{
+  flex:0 0 auto;
+  font-size:11px;
+  font-weight:850;
+  padding:5px 8px;
+  border-radius:999px;
+  color:white;
+  background:#0f172a;
+}
+.desc{
+  margin:8px 0 10px;
+  color:#374151;
+  line-height:1.5;
+  font-size:13px;
+}
+.mini{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  margin-bottom:10px;
+}
+.mini div{
+  background:#f3f4f6;
+  padding:8px;
+  border-radius:12px;
+  font-size:12px;
+  color:#374151;
+}
+.mini b{
+  display:block;
+  color:#111827;
+  margin-bottom:2px;
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+}
+.tip{
+  font-size:12.5px;
+  line-height:1.5;
+  color:#4b5563;
+  border-left:3px solid #d1d5db;
+  padding-left:9px;
+  margin-bottom:10px;
+}
+.card a{
+  display:inline-flex;
+  text-decoration:none;
+  color:#111827;
+  background:#e5e7eb;
+  padding:8px 10px;
+  border-radius:999px;
+  font-weight:850;
+  font-size:12px;
+}
+.leaflet-popup-content-wrapper{border-radius:18px}
+.popup-title{font-weight:850;font-size:15px}
+.popup-meta{color:#4b5563;line-height:1.5;margin-top:6px}
+.popup-link{display:inline-block;margin-top:8px;color:#0b57d0;font-weight:750}
+@media(max-width:880px){
+  .layout{grid-template-columns:1fr;padding:10px}
+  #map{height:58vh;min-height:440px;border-radius:20px}
+  .side{max-height:none;overflow:visible}
+  .hero{padding:18px 14px 12px}
+}
+</style>
+</head>
+<body>
+<section class="hero">
+  <div class="eyebrow">Osaka Rainy Food Travel Map</div>
+  <h1>Indoor Osaka Gourmet<br>for Rainy Days</h1>
+  <p class="lead">A stylish English map for rainy-day food routes in Osaka. Switch between indoor gourmet plans, tap pins, compare time and budget, and open each spot in Google Maps.</p>
+  <div class="toolbar" id="toolbar">
+    <button class="active" data-plan="all">All Plans</button>
+    <button data-plan="plan1">Indoor Umeda</button>
+    <button data-plan="plan2">Namba Food</button>
+    <button data-plan="plan3">Japanese Sweets</button>
+    <button data-plan="plan4">Ramen Tour</button>
+    <button data-plan="plan5">Luxury Indoor</button>
+  </div>
+</section>
+<main class="layout">
+  <div id="map"></div>
+  <aside class="side">
+    <section class="recommend">
+      <h2 id="recTitle">All Rainy-Day Food Routes</h2>
+      <div class="meta">
+        <span class="pill" id="recTime">5 plans</span>
+        <span class="pill" id="recBudget">Indoor-friendly map</span>
+      </div>
+      <p id="recText">Use the full map to compare indoor-friendly areas: Umeda for station-connected dining, Namba and Shinsaibashi for sweets and classic food, and Abeno Harukas for a premium indoor route.</p>
+      <div class="route" id="routeBox"></div>
+    </section>
+    <section class="cards" id="cards"></section>
+  </aside>
+</main>
+<script>
+const plans = [{"id": "plan1", "title": "Rainy Plan 1", "subtitle": "Indoor Gourmet in Umeda", "total_time": "Approx. 5 hours", "total_budget": "Approx. ¥7,000", "mood": "Comfortable, station-connected, elegant, easy on rainy days", "how": "Stay around the Umeda / Osaka Station area and enjoy department-store food floors, restaurant areas, and a relaxed café without moving too far outdoors.", "spots": [{"name": "Hanshin Department Store Umeda Main Store", "lat": 34.700765, "lng": 135.497985, "vibe": "A popular food floor where you can enjoy gourmet shopping comfortably even on a rainy day.", "time": "Approx. 2 hours", "budget": "Approx. ¥2,500", "tip": "Start here for snacks, sweets, and Osaka-style food souvenirs before choosing a proper meal.", "google": "Hanshin Department Store Umeda Main Store Osaka"}, {"name": "LUCUA Osaka", "lat": 34.702485, "lng": 135.495951, "vibe": "A large station-connected shopping complex with many restaurants, cafés, Japanese food, Western food, and casual dining options.", "time": "Approx. 2 hours", "budget": "Approx. ¥2,500", "tip": "Use this as the main meal stop. It is convenient because you can stay indoors around Osaka Station.", "google": "LUCUA Osaka restaurants"}, {"name": "HARBS Daimaru Umeda", "lat": 34.701319, "lng": 135.496982, "vibe": "A popular café where you can relax with fruit cakes and a calm atmosphere.", "time": "Approx. 1 hour", "budget": "Approx. ¥2,000", "tip": "Best as the final café break after shopping and lunch.", "google": "HARBS Daimaru Umeda Osaka"}]}, {"id": "plan2", "title": "Rainy Plan 2", "subtitle": "Namba Food Tour", "total_time": "Approx. 4.5 hours", "total_budget": "Approx. ¥4,700", "mood": "Casual, lively, underground-friendly, classic Osaka", "how": "Use Namba’s underground walkways and covered areas to reduce rain exposure, then enjoy market food and Osaka’s famous cheesecake.", "spots": [{"name": "Namba Walk", "lat": 34.666618, "lng": 135.501166, "vibe": "An underground shopping street where you can enjoy shopping and food without getting wet.", "time": "Approx. 1.5 hours", "budget": "Approx. ¥500", "tip": "A good first stop for rainy-day movement. Use it as a sheltered route into the Namba area.", "google": "Namba Walk Osaka"}, {"name": "Kuromon Ichiba Market", "lat": 34.665239, "lng": 135.506666, "vibe": "A lively market where you can enjoy Osaka-style food walking, including seafood, wagyu, and local snacks.", "time": "Approx. 2 hours", "budget": "Approx. ¥3,000", "tip": "Choose warm or grilled items if the weather feels cold or humid.", "google": "Kuromon Ichiba Market Osaka"}, {"name": "Rikuro Ojisan no Mise Namba Main Store", "lat": 34.665998, "lng": 135.501978, "vibe": "A popular dessert shop famous for freshly baked fluffy cheesecake.", "time": "Approx. 1 hour", "budget": "Approx. ¥1,200", "tip": "End with cheesecake. It also works well as a souvenir stop.", "google": "Rikuro Ojisan no Mise Namba Main Store Osaka"}]}, {"id": "plan3", "title": "Rainy Plan 3", "subtitle": "Japanese Sweets Tour", "total_time": "Approx. 4.5 hours", "total_budget": "Approx. ¥4,700", "mood": "Sweet, Japanese-modern, relaxed, photogenic", "how": "Enjoy matcha, Japanese sweets, fluffy cheesecake, and indoor shopping around Shinsaibashi and Namba.", "spots": [{"name": "MACCHA HOUSE Matcha Kan Shinsaibashi", "lat": 34.672147, "lng": 135.501088, "vibe": "A Japanese-modern café where you can enjoy matcha sweets in a stylish indoor space.", "time": "Approx. 1 hour", "budget": "Approx. ¥1,500", "tip": "Start with matcha desserts for a very Japanese café mood.", "google": "MACCHA HOUSE Matcha Kan Shinsaibashi Osaka"}, {"name": "Tsujiri Daimaru Shinsaibashi", "lat": 34.672486, "lng": 135.500595, "vibe": "An authentic matcha café by a long-established Kyoto tea brand.", "time": "Approx. 1 hour", "budget": "Approx. ¥1,500", "tip": "Compare the matcha taste with MACCHA HOUSE if you want a dessert-focused route.", "google": "Tsujiri Daimaru Shinsaibashi Osaka"}, {"name": "Rikuro Ojisan no Mise Namba Main Store", "lat": 34.665998, "lng": 135.501978, "vibe": "A famous shop known for fluffy, freshly baked cheesecake.", "time": "Approx. 1 hour", "budget": "Approx. ¥1,200", "tip": "Good for both eating and buying a take-away cake.", "google": "Rikuro Ojisan no Mise Namba Main Store Osaka"}, {"name": "Shinsaibashi PARCO", "lat": 34.672863, "lng": 135.500556, "vibe": "A large indoor shopping complex where you can enjoy cafés, shopping, and pop-culture spaces.", "time": "Approx. 1.5 hours", "budget": "Approx. ¥500+", "tip": "Use this as a rain-safe break between dessert stops or as the final shopping stop.", "google": "Shinsaibashi PARCO Osaka"}]}, {"id": "plan4", "title": "Rainy Plan 4", "subtitle": "Ramen Tour", "total_time": "Approx. 3 hours", "total_budget": "Approx. ¥4,300", "mood": "Warm, casual, fast-paced, solo-friendly", "how": "A compact rainy-day route for ramen lovers. Keep portions flexible and share bowls if you want to try all three comfortably.", "spots": [{"name": "Ichiran Dotonbori", "lat": 34.669051, "lng": 135.502241, "vibe": "A popular ramen shop that is easy to enter even alone, known for individual dining booths.", "time": "Approx. 1 hour", "budget": "Approx. ¥1,500", "tip": "Good as the first stop because ordering is simple and tourist-friendly.", "google": "Ichiran Dotonbori Osaka"}, {"name": "Ramen Zundo-Ya Shinsaibashi", "lat": 34.67118, "lng": 135.50209, "vibe": "A ramen shop popular for rich tonkotsu pork-bone soup.", "time": "Approx. 1 hour", "budget": "Approx. ¥1,300", "tip": "Choose noodle firmness and soup richness depending on how hungry you are.", "google": "Ramen Zundo-Ya Shinsaibashi Osaka"}, {"name": "Human Beings Everybody Noodles", "lat": 34.720954, "lng": 135.491648, "vibe": "A stylish ramen shop where you can enjoy creative ramen in a modern interior.", "time": "Approx. 1 hour", "budget": "Approx. ¥1,500", "tip": "Use this as the more design-conscious ramen stop. It is farther north, so check transit before going.", "google": "Human Beings Everybody Noodles Osaka"}]}, {"id": "plan5", "title": "Rainy Plan 5", "subtitle": "Luxury Indoor Food Tour", "total_time": "Approx. 5 hours", "total_budget": "Approx. ¥12,000–¥14,000", "mood": "Premium, indoor, scenic, refined", "how": "Stay around Abeno Harukas for a high-comfort rainy-day plan with views, premium food floors, and high-end sushi.", "spots": [{"name": "Abeno Harukas Restaurant Area", "lat": 34.646091, "lng": 135.513351, "vibe": "A restaurant area where you can enjoy meals with city views from a high-rise building.", "time": "Approx. 2 hours", "budget": "Approx. ¥3,500", "tip": "Best when you want a comfortable indoor meal with a special view.", "google": "Abeno Harukas restaurants Osaka"}, {"name": "Kintetsu Department Store Abeno Harukas Main Store", "lat": 34.646183, "lng": 135.513402, "vibe": "A premium food floor with luxury sweets, Osaka souvenirs, and high-quality gourmet items.", "time": "Approx. 1.5 hours", "budget": "Approx. ¥2,000", "tip": "Use this for gift shopping or a slow food-floor walk before sushi.", "google": "Kintetsu Department Store Abeno Harukas Main Store food floor"}, {"name": "Kyubey Abeno Harukas", "lat": 34.64611, "lng": 135.513487, "vibe": "A high-end sushi restaurant where skilled chefs serve authentic Edomae-style sushi.", "time": "Approx. 1.5 hours", "budget": "Approx. ¥6,000–¥8,000", "tip": "Make this the main luxury experience of the day. Reservations are recommended when possible.", "google": "Kyubey Abeno Harukas Osaka"}]}];
+const allSpots = [{"name": "Hanshin Department Store Umeda Main Store", "lat": 34.700765, "lng": 135.497985, "vibe": "A popular food floor where you can enjoy gourmet shopping comfortably even on a rainy day.", "time": "Approx. 2 hours", "budget": "Approx. ¥2,500", "tip": "Start here for snacks, sweets, and Osaka-style food souvenirs before choosing a proper meal.", "google": "Hanshin Department Store Umeda Main Store Osaka", "plans": ["plan1"]}, {"name": "LUCUA Osaka", "lat": 34.702485, "lng": 135.495951, "vibe": "A large station-connected shopping complex with many restaurants, cafés, Japanese food, Western food, and casual dining options.", "time": "Approx. 2 hours", "budget": "Approx. ¥2,500", "tip": "Use this as the main meal stop. It is convenient because you can stay indoors around Osaka Station.", "google": "LUCUA Osaka restaurants", "plans": ["plan1"]}, {"name": "HARBS Daimaru Umeda", "lat": 34.701319, "lng": 135.496982, "vibe": "A popular café where you can relax with fruit cakes and a calm atmosphere.", "time": "Approx. 1 hour", "budget": "Approx. ¥2,000", "tip": "Best as the final café break after shopping and lunch.", "google": "HARBS Daimaru Umeda Osaka", "plans": ["plan1"]}, {"name": "Namba Walk", "lat": 34.666618, "lng": 135.501166, "vibe": "An underground shopping street where you can enjoy shopping and food without getting wet.", "time": "Approx. 1.5 hours", "budget": "Approx. ¥500", "tip": "A good first stop for rainy-day movement. Use it as a sheltered route into the Namba area.", "google": "Namba Walk Osaka", "plans": ["plan2"]}, {"name": "Kuromon Ichiba Market", "lat": 34.665239, "lng": 135.506666, "vibe": "A lively market where you can enjoy Osaka-style food walking, including seafood, wagyu, and local snacks.", "time": "Approx. 2 hours", "budget": "Approx. ¥3,000", "tip": "Choose warm or grilled items if the weather feels cold or humid.", "google": "Kuromon Ichiba Market Osaka", "plans": ["plan2"]}, {"name": "Rikuro Ojisan no Mise Namba Main Store", "lat": 34.665998, "lng": 135.501978, "vibe": "A popular dessert shop famous for freshly baked fluffy cheesecake.", "time": "Approx. 1 hour", "budget": "Approx. ¥1,200", "tip": "End with cheesecake. It also works well as a souvenir stop.", "google": "Rikuro Ojisan no Mise Namba Main Store Osaka", "plans": ["plan2", "plan3"]}, {"name": "MACCHA HOUSE Matcha Kan Shinsaibashi", "lat": 34.672147, "lng": 135.501088, "vibe": "A Japanese-modern café where you can enjoy matcha sweets in a stylish indoor space.", "time": "Approx. 1 hour", "budget": "Approx. ¥1,500", "tip": "Start with matcha desserts for a very Japanese café mood.", "google": "MACCHA HOUSE Matcha Kan Shinsaibashi Osaka", "plans": ["plan3"]}, {"name": "Tsujiri Daimaru Shinsaibashi", "lat": 34.672486, "lng": 135.500595, "vibe": "An authentic matcha café by a long-established Kyoto tea brand.", "time": "Approx. 1 hour", "budget": "Approx. ¥1,500", "tip": "Compare the matcha taste with MACCHA HOUSE if you want a dessert-focused route.", "google": "Tsujiri Daimaru Shinsaibashi Osaka", "plans": ["plan3"]}, {"name": "Shinsaibashi PARCO", "lat": 34.672863, "lng": 135.500556, "vibe": "A large indoor shopping complex where you can enjoy cafés, shopping, and pop-culture spaces.", "time": "Approx. 1.5 hours", "budget": "Approx. ¥500+", "tip": "Use this as a rain-safe break between dessert stops or as the final shopping stop.", "google": "Shinsaibashi PARCO Osaka", "plans": ["plan3"]}, {"name": "Ichiran Dotonbori", "lat": 34.669051, "lng": 135.502241, "vibe": "A popular ramen shop that is easy to enter even alone, known for individual dining booths.", "time": "Approx. 1 hour", "budget": "Approx. ¥1,500", "tip": "Good as the first stop because ordering is simple and tourist-friendly.", "google": "Ichiran Dotonbori Osaka", "plans": ["plan4"]}, {"name": "Ramen Zundo-Ya Shinsaibashi", "lat": 34.67118, "lng": 135.50209, "vibe": "A ramen shop popular for rich tonkotsu pork-bone soup.", "time": "Approx. 1 hour", "budget": "Approx. ¥1,300", "tip": "Choose noodle firmness and soup richness depending on how hungry you are.", "google": "Ramen Zundo-Ya Shinsaibashi Osaka", "plans": ["plan4"]}, {"name": "Human Beings Everybody Noodles", "lat": 34.720954, "lng": 135.491648, "vibe": "A stylish ramen shop where you can enjoy creative ramen in a modern interior.", "time": "Approx. 1 hour", "budget": "Approx. ¥1,500", "tip": "Use this as the more design-conscious ramen stop. It is farther north, so check transit before going.", "google": "Human Beings Everybody Noodles Osaka", "plans": ["plan4"]}, {"name": "Abeno Harukas Restaurant Area", "lat": 34.646091, "lng": 135.513351, "vibe": "A restaurant area where you can enjoy meals with city views from a high-rise building.", "time": "Approx. 2 hours", "budget": "Approx. ¥3,500", "tip": "Best when you want a comfortable indoor meal with a special view.", "google": "Abeno Harukas restaurants Osaka", "plans": ["plan5"]}, {"name": "Kintetsu Department Store Abeno Harukas Main Store", "lat": 34.646183, "lng": 135.513402, "vibe": "A premium food floor with luxury sweets, Osaka souvenirs, and high-quality gourmet items.", "time": "Approx. 1.5 hours", "budget": "Approx. ¥2,000", "tip": "Use this for gift shopping or a slow food-floor walk before sushi.", "google": "Kintetsu Department Store Abeno Harukas Main Store food floor", "plans": ["plan5"]}, {"name": "Kyubey Abeno Harukas", "lat": 34.64611, "lng": 135.513487, "vibe": "A high-end sushi restaurant where skilled chefs serve authentic Edomae-style sushi.", "time": "Approx. 1.5 hours", "budget": "Approx. ¥6,000–¥8,000", "tip": "Make this the main luxury experience of the day. Reservations are recommended when possible.", "google": "Kyubey Abeno Harukas Osaka", "plans": ["plan5"]}];
+let currentPlan = "all";
+let markers = [];
+const colors = {
+  plan1:"#60a5fa",
+  plan2:"#22d3ee",
+  plan3:"#fb7185",
+  plan4:"#f97316",
+  plan5:"#a78bfa",
+  all:"#ffffff"
+};
+const map = L.map('map', {scrollWheelZoom:true});
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom:19,
+  attribution:'&copy; OpenStreetMap contributors'
+}).addTo(map);
+
+function selectedPlanObj() {
+  return plans.find(p => p.id === currentPlan);
+}
+function visibleSpots() {
+  if (currentPlan === "all") return allSpots;
+  const p = selectedPlanObj();
+  return p ? p.spots.map(s => { return {...s, plans:[p.id]} }) : allSpots;
+}
+function colorFor(s) {
+  if (currentPlan !== "all") return colors[currentPlan];
+  return colors[s.plans?.[0]] || "#60a5fa";
+}
+function iconFor(s, index) {
+  const color = colorFor(s);
+  return L.divIcon({
+    className:'',
+    html:`<div style="
+      width:28px;height:28px;border-radius:50%;
+      background:${color};
+      color:#111827;
+      border:3px solid white;
+      display:flex;align-items:center;justify-content:center;
+      font-size:12px;font-weight:900;
+      box-shadow:0 4px 16px rgba(0,0,0,.45);
+    ">${index+1}</div>`,
+    iconSize:[28,28],
+    iconAnchor:[14,14]
+  });
+}
+function renderMap() {
+  markers.forEach(m => map.removeLayer(m));
+  markers = [];
+  const bounds = [];
+  visibleSpots().forEach((s, i) => {
+    bounds.push([s.lat, s.lng]);
+    const google = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.google)}`;
+    const marker = L.marker([s.lat, s.lng], {icon: iconFor(s, i)})
+      .addTo(map)
+      .bindPopup(`
+        <div class="popup-title">${s.name}</div>
+        <div class="popup-meta">
+          ${s.vibe}<br><br>
+          Time: ${s.time}<br>
+          Budget: ${s.budget}<br>
+          <span style="display:block;margin-top:6px;"><b>Enjoying tip:</b> ${s.tip}</span>
+        </div>
+        <a class="popup-link" href="${google}" target="_blank">Open in Google Maps</a>
+      `);
+    markers.push(marker);
+  });
+  if (bounds.length) map.fitBounds(bounds, {padding:[36,36]});
+}
+function renderCards() {
+  const cards = document.getElementById("cards");
+  cards.innerHTML = "";
+  visibleSpots().forEach((s, i) => {
+    const google = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.google)}`;
+    const card = document.createElement("article");
+    card.className = "card";
+    card.innerHTML = `
+      <div class="topline">
+        <h3>${i+1}. ${s.name}</h3>
+        <span class="tag">Rainy Stop</span>
+      </div>
+      <p class="desc">${s.vibe}</p>
+      <div class="mini">
+        <div><b>Time</b>${s.time}</div>
+        <div><b>Budget</b>${s.budget}</div>
+      </div>
+      <div class="tip"><b>How to enjoy:</b> ${s.tip}</div>
+      <a href="${google}" target="_blank">Open in Google Maps</a>
+    `;
+    cards.appendChild(card);
+  });
+}
+function renderRecommendation() {
+  const title = document.getElementById("recTitle");
+  const time = document.getElementById("recTime");
+  const budget = document.getElementById("recBudget");
+  const text = document.getElementById("recText");
+  const routeBox = document.getElementById("routeBox");
+  routeBox.innerHTML = "";
+
+  if (currentPlan === "all") {
+    title.textContent = "All Rainy-Day Food Routes";
+    time.textContent = "5 plans";
+    budget.textContent = "Choose by area";
+    text.textContent = "Use the full map to compare indoor-friendly areas: Umeda for station-connected dining, Namba and Shinsaibashi for sweets and classic food, and Abeno Harukas for a premium indoor route.";
+    plans.forEach(p => {
+      const div = document.createElement("div");
+      div.textContent = `${p.title}: ${p.subtitle} / ${p.total_time} / ${p.total_budget}`;
+      routeBox.appendChild(div);
+    });
+  } else {
+    const p = selectedPlanObj();
+    title.textContent = `${p.title}: ${p.subtitle}`;
+    time.textContent = p.total_time;
+    budget.textContent = p.total_budget;
+    text.textContent = `${p.mood}. ${p.how}`;
+    p.spots.forEach((s, i) => {
+      const div = document.createElement("div");
+      div.textContent = `${i+1}. ${s.name} → ${s.time} / ${s.budget}`;
+      routeBox.appendChild(div);
+    });
+  }
+}
+function renderAll() {
+  renderMap();
+  renderCards();
+  renderRecommendation();
+}
+document.querySelectorAll("button[data-plan]").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll("button[data-plan]").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    currentPlan = btn.dataset.plan;
+    renderAll();
+  });
+});
+renderAll();
+</script>
+</body>
+</html>
